@@ -128,8 +128,6 @@ class CompilationEngine:
     def compile_parameter_list(self, father_node):
         parameter_list_node = self.doc.createElement('parameterList')
         father_node.appendChild(parameter_list_node)
-        empty_text_node = self.doc.createTextNode('')
-        parameter_list_node.appendChild(empty_text_node)
         if self.current_token.nodeName == 'identifier' or \
                 self.current_token.childNodes[0].nodeValue in ['int', 'char', 'boolean']:
             parameter_list_node.appendChild(self.current_token)
@@ -150,6 +148,9 @@ class CompilationEngine:
                     if self.current_token.nodeName == 'identifier':
                         parameter_list_node.appendChild(self.current_token)
                         self.__idx_advance()
+        else:
+            empty_text_node = self.doc.createTextNode('')
+            parameter_list_node.appendChild(empty_text_node)
 
     def compile_subroutine_body(self, father_node):
         if self.current_token.nodeName == 'symbol' and self.current_token.childNodes[0].nodeValue == '{':
@@ -409,9 +410,11 @@ class CompilationEngine:
 
         if not (self.current_token.nodeName == 'symbol' and self.current_token.childNodes[0].nodeValue == ';'):
             self.compile_expression(return_node)
-        else:
+        if self.current_token.nodeName == 'symbol' and self.current_token.childNodes[0].nodeValue == ';':
             return_node.appendChild(self.current_token)
             self.__idx_advance()
+        else:
+            raise SyntaxError("';' expected.")
 
     def compile_expression(self, father_node):
         expression_node = self.doc.createElement('expression')
@@ -493,14 +496,15 @@ class CompilationEngine:
     def compile_expression_list(self, father_node):
         expression_list_node = self.doc.createElement('expressionList')
         father_node.appendChild(expression_list_node)
-        # empty_text_node=self.doc.createTextNode('')
-        # expression_list_node.appendChild(empty_text_node)
         if not (self.current_token.nodeName == 'symbol' and self.current_token.childNodes[0].nodeValue == ')'):
             self.compile_expression(expression_list_node)
             while self.current_token.nodeName == 'symbol' and self.current_token.childNodes[0].nodeValue == ',':
                 expression_list_node.appendChild(self.current_token)
                 self.__idx_advance()
                 self.compile_expression(expression_list_node)
+        else:
+            empty_text_node = self.doc.createTextNode('')
+            expression_list_node.appendChild(empty_text_node)
 
     def __idx_advance(self):
         if self.input_child_node_idx<len(self.in_xml.documentElement.childNodes)-1:
